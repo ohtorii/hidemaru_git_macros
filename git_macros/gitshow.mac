@@ -63,12 +63,3 @@ if (result == false) {
   endmacro;
 }
 openfile "/r " + $$file;
-
-// 実行コマンド表示する
-##mode = 0;
-if (tabmode) {
-  ##mode = 3;
-}
-title $$cmd,##mode;
-title -1,##mode;
-endmacro;

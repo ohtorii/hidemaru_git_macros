@@ -6,7 +6,7 @@ if (result == false) {
   endmacro;
 }
 if ($$condition != "") {
-  $$git = $$git + " --grep " + leftstr($$condition, 70); 
+  $$git = $$git + " --grep " + leftstr($$condition, 70);
 }
 
 disabledraw;
@@ -17,12 +17,3 @@ $$dir = directory2 + "\\";
 $$log = getenv("TMP") + "\\_logstat" + ".all" ;
 runex $$cmd,0,0,"",2,$$log,0,"",2,$$dir,0,0,encode;
 openfile "/r " + $$log;
-
-// 実行コマンド表示する
-##mode = 0;
-if (tabmode) {
-  ##mode = 3;
-}
-title $$cmd,##mode;
-title -1,##mode;
-endmacro;
