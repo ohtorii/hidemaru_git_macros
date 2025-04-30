@@ -23,3 +23,6 @@ runex $$cmd
     , 6         //encode 0:ansi, 2:utf-16, 6:utf-8
     , 0         //extended flags
 ;
+
+//runex の引数が 4:new window の場合はカーソルを先頭に持ってくる
+moveto 0, 0;

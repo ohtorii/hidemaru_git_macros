@@ -19,7 +19,7 @@ runex $$cmd
                 //       4:current content, 5:selection
     , 4, ""     //stdout 0:none, 1:auto, 2:>file 3:>>file, 4:new window,
                 //       5:insert, 6:replace, 7:>output pane, 8:>>output pane
-    , 5, ""     //stderr 0:none, 1:auto or >>stdout, 2-8:same as stdout's param
+    , 4, ""     //stderr 0:none, 1:auto or >>stdout, 2-8:same as stdout's param
     , 2, $$dir     //folder 0:none, 1:current, 2:specify 3:(reserved), 4:exe's
     , 2         //show   0:auto, 1:show, 2:hide, 3-13:ShellExecute()'s SW_*
     , 1         //draw   0:draw, 1:no draw when stdout redirected
@@ -66,7 +66,7 @@ if (strlen($$commit_hash) != 7) {
   endmacro;
 }
 
-// コミットハッシュの内容をファイルにする
+// コミットハッシュの内容
 $$git = "git.exe show ";
 $$cmd = $$git + $$commit_hash + ":" + basename2;
 runex $$cmd
@@ -86,4 +86,5 @@ if (result == 0) {
   message "gitのコマンド実行時にエラーが発生しました。\n" + $$cmd;
   endmacro;
 }
-message $$cmd;
+//runex の引数が 4:new window の場合はカーソルを先頭に持ってくる
+moveto 0, 0;

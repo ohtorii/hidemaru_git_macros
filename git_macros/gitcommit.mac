@@ -1,9 +1,9 @@
-// git commit 
+// git commit
 
 $$default_msg = date + " " + time;
 $$msg = input("commit message", $$default_msg);
 if (result == false) {
-  return;
+  endmacro;
 }
 
 $$target_file = getarg(0);
