@@ -1,0 +1,95 @@
+﻿//
+//メニュー表示でコミットハッシュを取得する
+//
+//引数 なし
+//返値 コミットハッシュ文字列
+
+#log_max_count = 60;
+#max_width = 70;
+
+$menu[0] = "";
+#menuCount=0;
+
+call main;
+endmacro $$return;
+
+
+main:
+    ##current_handle = hidemaruhandle(0);
+    call ExcuteGitCommandAndOpenHidemaru;
+    if(##return==false){
+        return "";
+    }
+    ##tmp_handle = hidemaruhandle(0);
+
+    call CreateMenuArray;
+
+    setactivehidemaru ##current_handle;
+    closehidemaruforced ##tmp_handle;
+
+    call ShowMenu;
+    return $$return;
+
+
+ExcuteGitCommandAndOpenHidemaru:
+    // メニュー用にログを取得する
+    $$git = "git.exe log -" + str(#log_max_count) + " --follow --no-merges --date=short --pretty=format:\"[%ad] %h %an : %s\" " ;
+    $$cmd = $$git + filename2;
+    $$dir = directory2 + "\\";
+
+    //new window
+    openfile "/h";
+    runex $$cmd
+        , 1         //sync   0:async, 1:sync
+        , 0, ""     //stdin  0:none, 1:auto, 2:<file, 3:(reserved),
+                    //       4:current content, 5:selection
+        , 5, ""     //stdout 0:none, 1:auto, 2:>file 3:>>file, 4:new window,
+                    //       5:insert, 6:replace, 7:>output pane, 8:>>output pane
+        , 5, ""     //stderr 0:none, 1:auto or >>stdout, 2-8:same as stdout's param
+        , 2, $$dir  //folder 0:none, 1:current, 2:specify 3:(reserved), 4:exe's
+        , 2         //show   0:auto, 1:show, 2:hide, 3-13:ShellExecute()'s SW_*
+        , 1         //draw   0:draw, 1:no draw when stdout redirected
+        , 6         //encode 0:ansi, 2:utf-16, 6:utf-8
+        , 0         //extended flags
+    ;
+    if(result==0){
+        message "gitのコマンド実行時にエラーが発生しました。\n" + $$cmd;
+        return false;;
+    }
+    moveto 0,0;//ファイル先頭へ移動
+    return true;
+
+CreateMenuArray:
+    $$comment = leftstr("■表示するコミットを選択してください■" + basename2,#max_width);
+    ##start_row_index = 2;
+    #menuCount = ##start_row_index;
+    $menu[0] = $$comment;
+    $menu[1] = "\x01";
+    while (#menuCount <= #log_max_count + ##start_row_index) {
+      if (result == false){
+        break;
+      }
+
+      $$lineStr=getlinetext();
+      $menu[#menuCount] = leftstr($$lineStr,#max_width);
+
+      down;
+      #menuCount = #menuCount + 1;
+    }
+    return #menuCount;
+
+
+ShowMenu:
+    // メニューを表示する
+    menuarray $menu,#menuCount;
+    ##idx = result;
+
+    $$commit_hash = "";
+    if (##idx > ##start_row_index) {
+      // 選択されたメニューからコミットハッシュを取り出す
+      $$commit_hash = midstr($menu[##idx - 1], 13, 7);
+    }
+    if (strlen($$commit_hash) != 7) {
+      return "";
+    }
+    return $$commit_hash;
