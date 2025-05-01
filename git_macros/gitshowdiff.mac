@@ -1,4 +1,8 @@
 ﻿// git showとdiff
+if(filename==""){
+    endmacro;
+}
+
 
 $$tool = "C:\\Program Files\\WinMerge\\WinMergeU.exe";
 

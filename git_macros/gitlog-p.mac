@@ -1,4 +1,7 @@
 // git log -p ファイル名
+if(filename==""){
+    endmacro;
+}
 
 disabledraw;
 disablehistory 0x0041;

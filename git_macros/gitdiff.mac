@@ -1,4 +1,7 @@
 // git diff ファイル名
+if(filename==""){
+    endmacro;
+}
 
 $$git = "git.exe diff -- ";
 $$cmd = $$git + filename2;

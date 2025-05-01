@@ -1,4 +1,7 @@
 ﻿// git show
+if(filename==""){
+    endmacro;
+}
 
 ##log_max_count = 60;
 ##max_width = 70;

@@ -1,4 +1,7 @@
 // git log ファイル名
+if(filename==""){
+    endmacro;
+}
 
 $$git = "git.exe log ";
 $$cmd = $$git + filename2;
