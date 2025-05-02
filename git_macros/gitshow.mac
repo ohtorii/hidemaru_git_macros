@@ -5,7 +5,7 @@ if(filename==""){
 
 disablehistory 0x0041;
 
-execmacro currentmacrodirectory + "\\sub_commit_hash_menu.mac";
+execmacro currentmacrodirectory + "\\sub\\sub_commit_hash_menu.mac";
 $$commit_hash = getresultex(-1);
 if($$commit_hash==""){
     endmacro;

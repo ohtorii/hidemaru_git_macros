@@ -4,82 +4,73 @@ if(filename==""){
 }
 
 
-$$tool = "C:\\Program Files\\WinMerge\\WinMergeU.exe";
-
+$$tool = """C:\Program Files\WinMerge\WinMergeU.exe""";
 if (existfile($$tool) == false) {
   message "比較ツールが存在しません。\n" + $$tool;
   endmacro;
 }
-
-##log_max_count = 60;
-##max_width = 70;
-
-disabledraw;
 disablehistory 0x0041;
 
-// メニュー用にログを取得する
-$$git = "git.exe log -" + str(##log_max_count) + " --follow --no-merges --date=short --pretty=format:\"[%ad] %h %an : %s\" " ;
-$$cmd = $$git + filename2;
-$$dir = directory2 + "\\";
-##current_handle = hidemaruhandle(0);
-$$log = getenv("TMP") + "\\" + basename2 + "log" + filetype;
-runex $$cmd,0,0,"",2,$$log,0,"",2,$$dir,0,0,encode;
-if (existfile($$log, 2) == 0) {
-  endmacro;
-}
-$$comment = leftstr("■比較するコミットを選択してください■" + basename2,##max_width);
-
-// 隠しタブにログを表示する
-openfile "/h " + $$log;
-##tmp_handle = hidemaruhandle(0);
-##start_row_index = 2;
-##count = ##start_row_index;
-$$menu[0] = $$comment;
-$$menu[1] = "\x01";
-while (##count <= ##log_max_count + ##start_row_index) {
-  if (result == false){
-    break;
-  }
-  beginclipboardread;
-  beginlinesel 0;
-  copy;
-  $$menu[##count] = leftstr(getclipboard,##max_width);
-  down;
-  ##count = ##count + 1;
-}
-enabledraw;
-setactivehidemaru ##current_handle;
-closehidemaru ##tmp_handle;
-
-// メニューを表示する
-menuarray $$menu,##count;
-##idx = result;
-
-$$commit_hash = "";
-if (##idx > ##start_row_index) {
-  // 選択されたメニューからコミットハッシュを取り出す
-  $$commit_hash = midstr($$menu[##idx - 1], 13, 7);
-}
-if (strlen($$commit_hash) != 7) {
-  endmacro;
+execmacro currentmacrodirectory + """\sub\sub_commit_hash_menu.mac""";
+$$commit_hash = getresultex(-1);
+if($$commit_hash==""){
+    endmacro;
 }
 
-// コミットハッシュの内容をファイルにする
-$$file = getenv("TMP") + "\\" + basename2 + $$commit_hash + "." + filetype;
+
+// コミットハッシュの内容を一時ファイルにする
+execmacro currentmacrodirectory + """\util\create_temp_file.mac""", "", sprintf(" [commit %s] %s", $$commit_hash, basename2);
+$$file = getresultex(-1);
+if($$file==""){
+    message "一時ファイルの生成に失敗しました";
+    endmacro;
+}
+
 $$git = "git.exe show ";
-$$cmd = $$git + $$commit_hash + ":" + basename2 + " > " + $$file;
-run $$cmd;
+$$cmd = $$git + sprintf(""""%s:%s"""", $$commit_hash,  basename2);
+runex $$cmd
+    , 1         //sync   0:async, 1:sync
+    , 0, ""     //stdin  0:none, 1:auto, 2:<file, 3:(reserved),
+                //       4:current content, 5:selection
+    , 2, $$file //stdout 0:none, 1:auto, 2:>file 3:>>file, 4:new window,
+                //       5:insert, 6:replace, 7:>output pane, 8:>>output pane
+    , 2, $$file //stderr 0:none, 1:auto or >>stdout, 2-8:same as stdout's param
+    , 1, ""     //folder 0:none, 1:current, 2:specify 3:(reserved), 4:exe's
+    , 2         //show   0:auto, 1:show, 2:hide, 3-13:ShellExecute()'s SW_*
+    , 1         //draw   0:draw, 1:no draw when stdout redirected
+    , 0         //encode 0:ansi, 2:utf-16, 6:utf-8
+    , 0x0001    //extended flags
+;
 if (result == false) {
+  deletefile $$file;
   message "gitのコマンド実行時にエラーが発生しました。\n" + $$cmd;
   endmacro;
 }
 
-// 比較ツールを実行する
-$$cmd = $$tool + " " + $$file + " " + filename2;
-run $$cmd;
-if (result == false) {
+/* 比較ツールを実行する
+一時ファイル($$file)はバッチファイル中で削除されます
+*/
+$$bat = currentmacrodirectory + """\util\RunDiffTool.bat""";
+$$arg = sprintf(""" "%s" "%s" "%s" delete "%s" No""", $$bat, $$tool, $$file, filename2);
+$$cmd = sprintf("""cmd /c "%s" """, $$arg);
+runex $$cmd
+    , 0         //sync   0:async, 1:sync
+    , 0, ""     //stdin  0:none, 1:auto, 2:<file, 3:(reserved),
+                //       4:current content, 5:selection
+    , 0, ""     //stdout 0:none, 1:auto, 2:>file 3:>>file, 4:new window,
+                //       5:insert, 6:replace, 7:>output pane, 8:>>output pane
+    , 0, ""     //stderr 0:none, 1:auto or >>stdout, 2-8:same as stdout's param
+    , 0, ""     //folder 0:none, 1:current, 2:specify 3:(reserved), 4:exe's
+    , 2         //show   0:auto, 1:show, 2:hide, 3-13:ShellExecute()'s SW_*
+    , 1         //draw   0:draw, 1:no draw when stdout redirected
+    , 0         //encode 0:ansi, 2:utf-16, 6:utf-8
+    , 0x0001    //extended flags
+;
+if (result == 0) {
   message "比較ツール実行時にエラーが発生しました。\n" + $$cmd;
   endmacro;
 }
+/*(Memo) runexで同期実行していればgetresultex(9)で終了ステータスを取得可能
+ */
 
 endmacro;
